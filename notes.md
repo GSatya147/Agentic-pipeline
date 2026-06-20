@@ -1,0 +1,2 @@
+#### ReAct
+- "Complex multi-hop questions masquerading as simple one-line queries can make LLMs hallucinate tool calls and cascade errors across steps. ReAct forces the model to reason before acting, and each observation from the real world strengthens the next reasoning step. Chain-of-thought lacks an external feedback loop, there's no observation grounding the reasoning and it produces no auditable trace, so even if you diagnose a failure you have no intervention point to fix it."
