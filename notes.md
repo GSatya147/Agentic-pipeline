@@ -1,5 +1,9 @@
 #### ReAct
 - "Complex multi-hop questions masquerading as simple one-line queries can make LLMs hallucinate tool calls and cascade errors across steps. ReAct forces the model to reason before acting, and each observation from the real world strengthens the next reasoning step. Chain-of-thought lacks an external feedback loop, there's no observation grounding the reasoning and it produces no auditable trace, so even if you diagnose a failure you have no intervention point to fix it."
+- The loop is Thought → Action → Observation → Thought. The Thought is functional not decorative, it's the model's working memory across iterations. The Action gets executed by your code, not the model. The Observation feeds back and grounds the next Thought.
+- Thought has roles depending on where in the loop it appears: decomposition at the start, tracking mid-loop, deciding when enough info exists, error correction when an observation was wrong.
+- First Thought is the highest hallucination risk — no observations yet, model is working purely from memory. Complex multi-hop questions make this worse.
+- HITL works because Thought is auditable. You can't intervene on a black box. The Thought step is what makes the loop inspectable and editable by a human.
 
 #### Multi-agentic raw python issues
 - The worst part is whose messages list is whose. Agent 1 has its own messages list growing. Agent 2 has its own. When Agent 2 needs Agent 1's output, do you pass the full messages list? Just the final answer? What if Agent 2 needs to know why Agent 1 made a decision, not just what it returned?
@@ -14,3 +18,7 @@ And when Agent 3 needs both Agent 1 and Agent 2's context, do you merge the list
 3. **Static edge:** Fixed connection. Always goes A → B.
 4. **Conditional edge:** Your Python function reads current state and returns which node to route to next. The model writes its intent into state. Your edge function reads it and routes. Clean separation: model decides intent, your code decides routing.
 5. **Compile:** Validates the graph structure before any execution. Catches undefined nodes, missing END paths, broken conditional routes. Locks the graph so it's safe for concurrent execution. Fail fast at definition time not runtime.
+
+#### How loop executes
+- The model generates text. code watches the stream. When it sees the Action signal it stops generation, runs the tool, injects the result as Observation, resumes generation. The model never "decides" to stop, code interrupts it.
+- Modern APIs moved this to structured JSON tool calls - no string parsing. The model populates a separate field, your code reads it. LangGraph sits on top of this.
