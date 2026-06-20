@@ -4,3 +4,13 @@
 #### Multi-agentic raw python issues
 - The worst part is whose messages list is whose. Agent 1 has its own messages list growing. Agent 2 has its own. When Agent 2 needs Agent 1's output, do you pass the full messages list? Just the final answer? What if Agent 2 needs to know why Agent 1 made a decision, not just what it returned?
 And when Agent 3 needs both Agent 1 and Agent 2's context, do you merge the lists? In what order? What happens to the token count?
+
+#### Langgraph discussion
+- in langgraph? i dont know anything about langgraph but if i were to maintain the state in raw. it would be a dicitonary for now, yes i don't have enough knowledge to change the way i store state haha cus this is day 1, but state should have information like the particualr agent's step of reason, the action it took, the result it produced, everything is needed in the context for the next agent to even act coherently. and everything needs to get logged for us to even see what's happening in this abomination of network of agents (the graph of 10 agents talking with eachother sending results across is mind aching better to parse a json log lol). so basically for the next agent to start execution it needs prior agent's state (the context, whether it failed or passed, what it retruned, what was the reasoning step, whether to critic or support it, or to take the action from the state and to continue it? and whether to pivot this to next agent if it's a decision making agent etc...)
+
+#### langraph primitives
+1. **State:** A `TypedDict`. Shared memory the entire graph reads from and writes to. Every node gets it, every node can append to it. Reducers handle concurrent writes — add_messages appends instead of overwriting, solving the same shared state bug you fixed in your async eval harness.
+2. **Node:** Any Python function that reads state and writes state. Not just agents, could be a validator, a tool executor, a human checkpoint. Agents are built from multiple nodes.
+3. **Static edge:** Fixed connection. Always goes A → B.
+4. **Conditional edge:** Your Python function reads current state and returns which node to route to next. The model writes its intent into state. Your edge function reads it and routes. Clean separation: model decides intent, your code decides routing.
+5. **Compile:** Validates the graph structure before any execution. Catches undefined nodes, missing END paths, broken conditional routes. Locks the graph so it's safe for concurrent execution. Fail fast at definition time not runtime.
