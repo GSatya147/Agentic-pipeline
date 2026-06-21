@@ -18,3 +18,6 @@ class Client:
         )
 
         return response.choices[0].message
+    
+if __name__=="__main__":
+    pass
