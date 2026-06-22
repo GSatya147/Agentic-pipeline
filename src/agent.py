@@ -6,8 +6,8 @@ from typing import Annotated, TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 
-from src.agent import Client
-from src.tools import Tools
+from client import Client
+from tools import Tools
 
 load_dotenv()
 
@@ -25,7 +25,7 @@ def llm_call(state: AgentState) -> dict:
 def search_tool(state: AgentState):
     tool_obj = Tools()
 
-    args = json.loads(state["messages"][-1].tool_calls[0]["function"]["arguments"])
+    args = state["messages"][-1].tool_calls[0]["args"]
     tool_call_id = state["messages"][-1].tool_calls[0]["id"]
     search_result = tool_obj.search_tool(query=args["query"])
 
@@ -73,4 +73,9 @@ initial_state = {
     "step_count" : 0
 }
 
-graph.invoke(initial_state)
+try:
+    result = graph.invoke(initial_state)
+    print(result)
+
+except Exception as e:
+    print(e)
