@@ -10,14 +10,18 @@ class Client:
         self.model = model
 
     def call_llm(self, messages, tools):
-        response = litellm.completion(
-            api_key=os.getenv("DEEPSEEK_API_KEY"),
-            model=self.model,
-            messages=messages,
-            tools=tools,
-        )
+        try:
+            response = litellm.completion(
+                api_key=os.getenv("DEEPSEEK_API_KEY"),
+                model=self.model,
+                messages=messages,
+                tools=tools,
+                )
 
-        return response.choices[0].message
+            return response.choices[0].message
+
+        except Exception as e:
+            print(e)
     
 if __name__=="__main__":
     pass
