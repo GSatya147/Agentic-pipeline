@@ -20,14 +20,21 @@ def llm_call(state: AgentState) -> dict:
     client_obj = Client(model=os.getenv("DEEPSEEK_MODEL"))
     response = client_obj.call_llm(messages=state["messages"], tools=state["tools_schema"])
 
+    print(f"""
+        LLM Node Executing...
+        thought     : {response.get("reasoning_content", "")}
+        tool calls  : {response.get("tool_calls", [])}
+        response    : {response.get("content", "Execute search tool")} 
+    """)
+
     return {"messages" : [response], "step_count" : state["step_count"] + 1}
 
 def search_tool(state: AgentState):
     tool_obj = Tools()
 
-    args = state["messages"][-1].tool_calls[0]["args"]
+    search_query = state["messages"][-1].tool_calls[0]["args"]["query"]
     tool_call_id = state["messages"][-1].tool_calls[0]["id"]
-    search_result = tool_obj.search_tool(query=args["query"])
+    search_result = tool_obj.search_tool(query=search_query)
 
     tool_message = {
         "role" : "tool",
@@ -35,13 +42,22 @@ def search_tool(state: AgentState):
         "tool_call_id" : tool_call_id
     }
 
+    print(f"""
+        Search Node Executing...
+        response : {search_result} 
+    """)    
+
     return {"messages" : [tool_message], "step_count" : state["step_count"] + 1}
 
 def routing_logic(state: AgentState):
     response = state["messages"][-1].tool_calls
+    print("Routing Node Executing...")
     if response:
+        print(f"        Action: To Execute {response[0]["name"]}")
         return "search_tool"
     else:
+        print("Ending")
+        print(f"        Final Result: {state["messages"][-1].content}")
         return END
     
 graph = StateGraph(AgentState)
@@ -74,8 +90,7 @@ initial_state = {
 }
 
 try:
-    result = graph.invoke(initial_state)
-    print(result)
+    graph.invoke(initial_state)
 
 except Exception as e:
     print(e)

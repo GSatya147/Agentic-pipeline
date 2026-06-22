@@ -44,7 +44,7 @@ class Tools:
         )
 
         llm_string = ""
-        for result in results.get("results")[:3]:
+        for result in results.get("results")[:2]:
             llm_string+=f"title         : {result.get("title")}\nurl         : {result.get("url")}\ncontent         : {result.get("content")}\n\n"
 
         return llm_string
