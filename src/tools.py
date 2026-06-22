@@ -18,7 +18,7 @@ class Tools:
         self.tools_schema.append({
             "type" : "function",
             "function" : {
-                "name" : "web search tool",
+                "name" : "search_tool",
                 "description" : "use web search when the context is inadequate, or when user requests for it. Be factual about claims use the web search for confirmation whenever applicable",
                 "parameters" : {
                     "type" : "object",
