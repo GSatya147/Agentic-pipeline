@@ -28,7 +28,9 @@ class Tools:
                             "description" : "a simple string type query to perform the web search efficiently",
                         }
                     },
-                    "required" : ["query"]
+                    "required" : ["query"],
+                    "arguments" : "search query"
+
                 }
             }
         })
