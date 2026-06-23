@@ -44,13 +44,21 @@ def search_tool(state: AgentState):
     return {"messages" : [tool_message], "step_count" : state["step_count"] + 1}
 
 def final_node(state: AgentState):
-    print("Ending")
-    print(f"        Final Result: {state["messages"][-1].content}")
+    print("Final Node Executing...")
+
+    if state["step_count"] >=3:
+        print("        Tool limit has reached...")
+    
+    else:
+        print(f"        Final Result: {state["messages"][-1].content}")
 
 def routing_logic(state: AgentState):
     print("Routing Node Executing...")
     response = state["messages"][-1].tool_calls
 
+    if state["step_count"] >=3:
+        return "final_node"
+    
     if response:
         print(f"        Action: To Execute {response[0]["name"]}, routed towards search node")
         return "search_tool"
