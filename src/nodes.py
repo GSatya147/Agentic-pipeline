@@ -1,0 +1,66 @@
+import os
+
+from dotenv import load_dotenv
+from langgraph.graph import END
+
+from src.client import Client
+from src.tools import Tools
+from src.state import AgentState
+
+load_dotenv()
+
+def llm_call(state: AgentState) -> dict:
+    print("LLM Node Executing...")
+
+    client_obj = Client(model=os.getenv("DEEPSEEK_MODEL"))
+    response = client_obj.call_llm(messages=state["messages"], tools=state["tools_schema"])
+
+    print(f"""
+        thought     : {response.get("reasoning_content", "")}
+        tool calls  : {response.get("tool_calls", [])}
+        response    : {response.get("content", "Execute search tool")} 
+    """)
+
+    return {"messages" : [response], "step_count" : state["step_count"] + 1}
+
+def search_tool(state: AgentState):
+    tool_obj = Tools()
+
+    search_query = state["messages"][-1].tool_calls[0]["args"]["query"]
+    tool_call_id = state["messages"][-1].tool_calls[0]["id"]
+    search_result = tool_obj.search_tool(query=search_query)
+
+    tool_message = {
+        "role" : "tool",
+        "content" : search_result,
+        "tool_call_id" : tool_call_id
+    }
+
+    print(f"""
+        Search Node Executing...
+        response : {search_result} 
+    """)    
+
+    return {"messages" : [tool_message], "step_count" : state["step_count"] + 1}
+
+def final_node(state: AgentState):
+    print("Ending")
+    print(f"        Final Result: {state["messages"][-1].content}")
+
+def routing_logic(state: AgentState):
+    print("Routing Node Executing...")
+    response = state["messages"][-1].tool_calls
+
+    if response:
+        print(f"        Action: To Execute {response[0]["name"]}, routed towards search node")
+        return "search_tool"
+    else:
+        print(f"        Action: routed towards final node")
+        return "final_node"
+        
+    
+
+
+
+
+
