@@ -21,7 +21,7 @@ class AgentGraph:
         # add conditional edges
         self.graph.add_conditional_edges("llm_call", routing_logic)
 
-        self.graph = self.graph.compile(checkpointer=self.checkpointer)
+        self.graph = self.graph.compile(checkpointer=self.checkpointer, interrupt_before=["final_node"])
 
     def invoke_graph(self, user_query, initial_state, thread_id):
         config = {
@@ -35,9 +35,11 @@ class AgentGraph:
 
             if snapshot.values:
                 self.graph.invoke({"messages" : [{"role" : "user", "content" : user_query}]}, config)
+                return self.graph.get_state(config=config)
 
             else:
                 self.graph.invoke(initial_state, config)
+                return self.graph.get_state(config=config)
 
         except Exception as e:
             print(e)
@@ -54,3 +56,22 @@ class AgentGraph:
 
             if snapshot.values:
                 print(f"History: {snapshot.values["messages"]}")
+
+    def resume_graph(self, thread_id):
+        config = {
+            "configurable" : {
+                "thread_id" : f"thread_{thread_id}"
+            }
+        }
+
+        self.graph.invoke(None, config=config) # resume graph
+
+    def modify_and_resume(self, modification, thread_id):
+        config = {
+            "configurable" : {
+                "thread_id" : f"thread_{thread_id}"
+            }
+        }
+
+        self.graph.update_state(values={"messages" : [{"role" : "assistant", "content" : modification}]}, config=config)
+        self.graph.invoke(None, config=config)
