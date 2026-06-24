@@ -34,6 +34,25 @@ class Tools:
                 }
             }
         })
+        self.tools_schema.append({
+            "type" : "function",
+            "function" : {
+                "name" : "calculator_tool",
+                "description" : "use calculator explicitly whenever math or expressions are involved or when user requests for it.",
+                "parameters" : {
+                    "type" : "object",
+                    "properties" : {
+                        "expression" : {
+                            "type" : "string",
+                            "description" : "a simple string type expression to perform the calculator eval efficiently",
+                        }
+                    },
+                    "required" : ["expression"],
+                    "arguments" : "math expression"
+
+                }
+            }
+        })
 
         return self.tools_schema
 
@@ -48,6 +67,9 @@ class Tools:
             llm_string+=f"title         : {result.get("title")}\nurl         : {result.get("url")}\ncontent         : {result.get("content")}\n\n"
 
         return llm_string
+    
+    def calculator_tool(self, query):
+        return eval(query) # arbitrary
     
 if __name__=="__main__":
     tool_obj = Tools()
