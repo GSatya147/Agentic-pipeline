@@ -35,3 +35,12 @@ And when Agent 3 needs both Agent 1 and Agent 2's context, do you merge the list
 1. The checkpointer saves state at every node, so when the graph pauses, nothing is lost
 2. interrupt_before tells the compiler to stop before a named node, the graph halts mid-execution and hands control back to your code
 3. `invoke(None, config)` resumes from exactly that point, passing None means "no new input, just continue from where you left off"
+
+#### Failure modes
+1. **Infinite Loops:** Agent keeps calling tools without terminating. **Mitigation:** per-invocation step counter in routing logic, hard stops at N steps.
+2. **Tool Hallucination:** Agent invents tool names or arguments that don't exist. **Mitigation:** strict manual tool schemas act as a whitelist; model can only call what's explicitly defined.
+3. **Context Explosion:** Message history grows until context window fills up across turns. **Mitigation:** threshold check on message length, summarise oldest messages with LLM while preserving system prompt, hard cap summary at 2k tokens.
+4. **Cascading Failures:** One bad tool call leads to increasingly wrong reasoning downstream. **Mitigation:** tool output validation at tool node level, return structured error instead of bad data; HITL before high-stakes tool execution.
+5. **Overconfidence:** Agent answers confidently from a failed or empty tool result. **Mitigation:** tool output validation checks result quality before passing to LLM; good tool schemas with explicit failure descriptions.
+6. **Under-use of Tools:** Agent answers from memory instead of using available tools. **Mitigation:** explicit system prompt instructions on when tools are mandatory; tool descriptions that clearly signal when they should be used.
+7. **Goal Drift:** Agent loses track of original goal over many steps. **Mitigation:** structured output schema at each step forcing agent to restate the original goal before acting.
