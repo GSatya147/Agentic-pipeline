@@ -2,6 +2,8 @@ import os
 
 from dotenv import load_dotenv
 from langgraph.graph import END
+from langfuse import Langfuse
+from langfuse import observe
 
 from src.client import Client
 from src.tools import Tools
@@ -9,6 +11,7 @@ from src.state import AgentState
 
 load_dotenv()
 
+@observe(name="llm_node")
 def llm_call(state: AgentState) -> dict:
     print("LLM Node Executing...")
 
@@ -23,6 +26,7 @@ def llm_call(state: AgentState) -> dict:
 
     return {"messages" : [response], "step_count" : state["step_count"] + 1}   
 
+@observe(name="final_node")
 def final_node(state: AgentState):
     print("Final Node Executing...")
 
@@ -32,6 +36,7 @@ def final_node(state: AgentState):
     else:
         print(f"        Final Result: {state["messages"][-1].content}")
     
+@observe(name="tool_node")
 def tool_node(state: AgentState):
     print("Tool Node Executing")
     # print(state["messages"][-1].tool_calls[0])
@@ -80,6 +85,7 @@ def tool_node(state: AgentState):
     else:
         return {"messages" : [{"role" : "tool", "content" : "Error, unknow tool requested [use search_tool/calculator_tool]"}], "step_count" : state["step_count"] + 1}
 
+@observe(name="routing_logic")
 def routing_logic(state: AgentState):
     print("Routing Node Executing...")
     response = state["messages"][-1].tool_calls
