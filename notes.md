@@ -22,3 +22,16 @@ And when Agent 3 needs both Agent 1 and Agent 2's context, do you merge the list
 #### How loop executes
 - The model generates text. code watches the stream. When it sees the Action signal it stops generation, runs the tool, injects the result as Observation, resumes generation. The model never "decides" to stop, code interrupts it.
 - Modern APIs moved this to structured JSON tool calls - no string parsing. The model populates a separate field, your code reads it. LangGraph sits on top of this.
+
+#### My ReAct agent:
+1. `user query` to `llm_node`. if the query needs: state will accumulate the tool calls, else just accumulates the response.
+2. `llm_node` to `routing_logic`. if state has tool calls route towards tool node (read step 3) else route towards `final_node` but interrupts the graph before executing final node. Asks the user approval. If y then resumes the graph and executes the `final_node`, elif n then asks for the modification: modifies the graph state and resumes the graph again, executing the `final_node` (difference is state is updated with the HITL response hence the final response will be different compared to y case)
+3. `tool_node`, checks the tool name and executes the tool function appropriately, returns the tool message to the get appended into the state.
+4. `tool_node` to `llm_node`, llm sees the appended result from tools, makes either an answer or reasons further more. 
+5. depending on the LLM decision whether to call further tools or not, the flow changes. if llm decides to call tool, repeat the flow from step 2's if state has tool calls, else repeat the flow from step 2's state has no tool calls.
+
+#### HITL in my agent:
+- HITL mechanically is,
+1. The checkpointer saves state at every node, so when the graph pauses, nothing is lost
+2. interrupt_before tells the compiler to stop before a named node, the graph halts mid-execution and hands control back to your code
+3. `invoke(None, config)` resumes from exactly that point, passing None means "no new input, just continue from where you left off"
