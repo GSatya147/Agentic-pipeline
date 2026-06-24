@@ -26,7 +26,7 @@ def llm_call(state: AgentState) -> dict:
 def final_node(state: AgentState):
     print("Final Node Executing...")
 
-    if state["step_count"] >=3:
+    if state["step_count"] >=10:
         print("        Tool limit has reached...")
     
     else:
@@ -84,12 +84,13 @@ def routing_logic(state: AgentState):
     print("Routing Node Executing...")
     response = state["messages"][-1].tool_calls
 
-    if state["step_count"] >=3:
+    if state["step_count"] >=10:
         return "final_node"
     
     if response:
         print(f"        Action: To Execute {response[0]["name"]}, routed towards tool node")
         return "tool_node"
+    
     else:
         print(f"        Action: routed towards final node")
         return "final_node"
